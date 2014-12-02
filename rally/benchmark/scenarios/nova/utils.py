@@ -19,6 +19,7 @@ from oslo.config import cfg
 
 from rally.benchmark.scenarios import base
 from rally.benchmark import utils as bench_utils
+from rally.benchmark.scenarios.neutron import utils as neutron_utils
 
 
 nova_benchmark_opts = []
@@ -65,7 +66,8 @@ CONF.register_group(benchmark_group)
 CONF.register_opts(nova_benchmark_opts, group=benchmark_group)
 
 
-class NovaScenario(base.Scenario):
+#class NovaScenario(base.Scenario):
+class NovaScenario(neutron_utils.NeutronScenario):
 
     @base.atomic_action_timer('nova.list_servers')
     def _list_servers(self, detailed=True):
@@ -92,6 +94,18 @@ class NovaScenario(base.Scenario):
 
         :returns: Created server object
         """
+	if kwargs == {} or not kwargs.has_key('nics'):
+	    network_create_args = {}
+            subnet_create_args = {}
+            subnet_cidr_start = "10.10.0.0/24"
+            subnets_per_network = 1
+            network, subnets = self._create_network_and_subnets(network_create_args,
+                                                                subnet_create_args,
+                                                                subnets_per_network,
+                                                                subnet_cidr_start)
+            kwargs['nics'] = [
+                              {'net-id': network['network']['id']},
+                             ]
         allow_ssh_secgroup = self.context().get("allow_ssh")
         if allow_ssh_secgroup:
             if 'security_groups' not in kwargs:
@@ -326,6 +340,18 @@ class NovaScenario(base.Scenario):
 
         :returns: List of created server objects
         """
+	if kwargs == {} or not kwargs.has_key('nics'):
+	    network_create_args = {}
+            subnet_create_args = {}
+            subnet_cidr_start = "10.10.0.0/24"
+            subnets_per_network = 1
+            network, subnets = self._create_network_and_subnets(network_create_args,
+                                                                subnet_create_args,
+                                                                subnets_per_network,
+                                                                subnet_cidr_start)
+            kwargs['nics'] = [
+                              {'net-id': network['network']['id']},
+                             ]
         for i in range(requests):
             self.clients("nova").servers.create('%s_%d' % (name_prefix, i),
                                                 image_id, flavor_id,
